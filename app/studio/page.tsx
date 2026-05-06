@@ -12,14 +12,14 @@ function StudioContent() {
   const [voiceId, setVoiceId] = useState(voiceIdParam);
   
   useEffect(() => {
-    fetch('/api/voices')
-      .then(res => res.json())
-      .then(data => {
-        setVoices(data);
-        if (!data.find((v: any) => v.id === voiceIdParam) && data.length > 0) {
-          setVoiceId(data[0].id);
-        }
-      });
+    const stored = localStorage.getItem('radio_voices');
+    if (stored) {
+      const data = JSON.parse(stored);
+      setVoices(data);
+      if (!data.find((v: any) => v.id === voiceIdParam) && data.length > 0) {
+        setVoiceId(data[0].id);
+      }
+    }
   }, [voiceIdParam]);
 
   const selectedVoice = voices.find(v => v.id === voiceId) || voices[0];
@@ -38,7 +38,11 @@ function StudioContent() {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, voiceId: selectedVoice.id })
+        body: JSON.stringify({ 
+          text, 
+          voiceId: selectedVoice.id, 
+          audioBase64: selectedVoice.audioBase64 
+        })
       });
 
       if (!response.ok) {

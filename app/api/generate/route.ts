@@ -2,33 +2,26 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { text, voiceId } = await request.json();
+    const { text, voiceId, audioBase64 } = await request.json();
 
-    if (!text) {
-      return NextResponse.json({ error: 'Texto não fornecido' }, { status: 400 });
+    if (!text || !audioBase64) {
+      return NextResponse.json({ error: 'Texto ou áudio não fornecido' }, { status: 400 });
     }
 
-    // 1. Obter o áudio de referência do locutor no banco local (data/voices.json)
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    // 1. Converter Base64 do LocalStorage de volta para Buffer/Blob
+    const base64Data = audioBase64.split(';base64,').pop();
+    const audioBuffer = Buffer.from(base64Data, 'base64');
     
-    const dataFilePath = path.join(process.cwd(), 'data', 'voices.json');
-    const voicesData = await fs.readFile(dataFilePath, 'utf8').catch(() => '[]');
-    const voices = JSON.parse(voicesData);
-    
-    const selectedVoice = voices.find((v: any) => v.id === voiceId);
-    if (!selectedVoice || !selectedVoice.audioFile) {
-      return NextResponse.json({ error: 'Locutor ou arquivo de áudio não encontrado' }, { status: 404 });
-    }
+    // O tipo MIME geralmente está na primeira parte, ex: "data:audio/webm;base64,..."
+    const mimeMatch = audioBase64.match(/data:(.*?);/);
+    const mimeType = mimeMatch ? mimeMatch[1] : 'audio/webm';
 
-    const audioFilePath = path.join(process.cwd(), 'public', 'uploads', selectedVoice.audioFile);
-    const audioBuffer = await fs.readFile(audioFilePath);
-    const refAudioBlob = new Blob([audioBuffer], { type: audioFilePath.endsWith('.webm') ? 'audio/webm' : 'audio/wav' });
+    const refAudioBlob = new Blob([audioBuffer], { type: mimeType });
 
     // 2. Montar FormData para enviar ao Colab
     const formData = new FormData();
     formData.append("text", text);
-    formData.append("file", refAudioBlob, selectedVoice.audioFile); 
+    formData.append("file", refAudioBlob, `voice_${voiceId}.webm`); 
 
     // 3. Fazer POST para o endpoint público do ngrok rodando no Google Colab
     const colabUrl = "https://benmost-norman-ultrasonically.ngrok-free.dev/clone";

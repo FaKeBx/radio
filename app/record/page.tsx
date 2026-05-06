@@ -4,6 +4,16 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Mic, Square, Play, Upload } from "lucide-react";
 
+// Função para converter Blob em Base64
+const blobToBase64 = (blob: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+};
+
 export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -69,22 +79,26 @@ export default function RecordPage() {
     
     setIsPublishing(true);
     
-    const formData = new FormData();
-    formData.append("audio", audioBlob);
-    formData.append("name", name);
-    formData.append("style", style);
-
     try {
-      const response = await fetch("/api/voices", {
-        method: "POST",
-        body: formData
-      });
+      // 1. Converter o áudio para Base64 para poder salvar no LocalStorage
+      const base64Audio = await blobToBase64(audioBlob);
+      const id = Date.now().toString();
 
-      if (!response.ok) {
-        throw new Error("Falha ao salvar");
-      }
+      const newVoice = {
+        id,
+        name,
+        gender: "Não especificado",
+        style: style || "Geral",
+        img: `https://i.pravatar.cc/150?u=${id}`,
+        audioBase64: base64Audio
+      };
 
-      alert("Voz enviada com sucesso para o Marketplace!");
+      // 2. Salvar no LocalStorage
+      const existingVoices = JSON.parse(localStorage.getItem('radio_voices') || '[]');
+      existingVoices.push(newVoice);
+      localStorage.setItem('radio_voices', JSON.stringify(existingVoices));
+
+      alert("Voz salva no seu navegador com sucesso!");
       // Limpa tudo
       setAudioUrl(null);
       setAudioBlob(null);
@@ -92,7 +106,7 @@ export default function RecordPage() {
       setStyle("");
     } catch (error) {
       console.error(error);
-      alert("Erro ao publicar voz.");
+      alert("Erro ao publicar voz no localStorage. (O áudio pode ser grande demais para o navegador).");
     } finally {
       setIsPublishing(false);
     }
@@ -103,7 +117,7 @@ export default function RecordPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Painel do Locutor</h1>
         <p className="text-muted-foreground mt-1">
-          Grave uma amostra da sua voz para disponibilizá-la no Marketplace. O modelo OmniVoice requer cerca de 5 a 10 segundos de áudio claro.
+          Grave uma amostra da sua voz para disponibilizá-la no Marketplace.
         </p>
       </div>
 
@@ -160,7 +174,7 @@ export default function RecordPage() {
                 </div>
                 <Button onClick={handlePublish} className="w-full" size="lg" disabled={isPublishing}>
                   <Upload className="w-4 h-4 mr-2" />
-                  {isPublishing ? "Publicando..." : "Publicar no Marketplace"}
+                  {isPublishing ? "Publicando..." : "Salvar no Navegador"}
                 </Button>
               </div>
             </div>

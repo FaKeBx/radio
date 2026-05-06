@@ -1,23 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { headers } from "next/headers";
+import { useEffect, useState } from "react";
 
-async function getVoices() {
-  try {
-    // Para funcionar tanto em dev quanto em prod com URL relativa/absoluta
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-    const host = (await headers()).get("host");
-    const res = await fetch(`${protocol}://${host}/api/voices`, { cache: 'no-store' });
-    if (!res.ok) return [];
-    return await res.json();
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-}
+export default function MarketplacePage() {
+  const [voices, setVoices] = useState<any[]>([]);
 
-export default async function MarketplacePage() {
-  const voices = await getVoices();
+  useEffect(() => {
+    // Busca do LocalStorage apenas no cliente
+    const stored = localStorage.getItem('radio_voices');
+    if (stored) {
+      setVoices(JSON.parse(stored));
+    }
+  }, []);
 
   return (
     <div className="container mx-auto p-8 max-w-5xl">
@@ -51,9 +47,9 @@ export default async function MarketplacePage() {
                 <p><span className="font-medium text-foreground">Estilo:</span> {voice.style}</p>
               </div>
               
-              {voice.audioFile && (
+              {voice.audioBase64 && (
                 <div className="mt-4 w-full">
-                  <audio controls src={`/uploads/${voice.audioFile}`} className="w-full h-8" />
+                  <audio controls src={voice.audioBase64} className="w-full h-8" />
                 </div>
               )}
 
