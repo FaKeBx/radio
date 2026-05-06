@@ -1,19 +1,24 @@
-import { Button } from "@/components/ui/button"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
-export default function Page() {
+export default function Home() {
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] bg-background text-foreground p-8 text-center">
+      <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
+        Bem-vindo ao <span className="text-primary">RadioVoice</span>
+      </h1>
+      <p className="text-lg text-muted-foreground max-w-[600px] mb-8">
+        Uma plataforma onde locutores podem clonar suas vozes e usuários de rádio podem criar áudios incríveis com as vozes disponíveis no Marketplace.
+      </p>
+      
+      <div className="flex gap-4 flex-col sm:flex-row">
+        <Link href="/marketplace">
+          <Button size="lg" className="w-full sm:w-auto">Explorar Marketplace</Button>
+        </Link>
+        <Link href="/record">
+          <Button size="lg" variant="outline" className="w-full sm:w-auto">Sou Locutor: Gravar Voz</Button>
+        </Link>
       </div>
     </div>
-  )
+  );
 }
