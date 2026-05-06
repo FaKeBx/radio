@@ -31,6 +31,13 @@ function StudioContent() {
   const handleGenerate = async () => {
     if (!text.trim() || !selectedVoice) return;
     
+    // Obter URL do colab das configurações
+    const colabUrl = localStorage.getItem("omnivoice_url");
+    if (!colabUrl) {
+      alert("Por favor, configure a URL do Ngrok na página de Configurações primeiro.");
+      return;
+    }
+
     setIsGenerating(true);
     setAudioUrl(null);
 
@@ -41,7 +48,8 @@ function StudioContent() {
         body: JSON.stringify({ 
           text, 
           voiceId: selectedVoice.id, 
-          audioBase64: selectedVoice.audioBase64 
+          audioBase64: selectedVoice.audioBase64,
+          colabUrl 
         })
       });
 

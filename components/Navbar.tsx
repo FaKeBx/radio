@@ -29,6 +29,12 @@ export function Navbar() {
             >
               Estúdio
             </Link>
+            <Link
+              href="/settings"
+              className="transition-colors hover:text-foreground/80 text-foreground/60"
+            >
+              Configurações
+            </Link>
           </nav>
         </div>
       </div>

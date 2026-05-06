@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { text, voiceId, audioBase64 } = await request.json();
+    const { text, voiceId, audioBase64, colabUrl } = await request.json();
 
-    if (!text || !audioBase64) {
-      return NextResponse.json({ error: 'Texto ou áudio não fornecido' }, { status: 400 });
+    if (!text || !audioBase64 || !colabUrl) {
+      return NextResponse.json({ error: 'Texto, áudio ou URL do Colab ausentes' }, { status: 400 });
     }
 
     // 1. Converter Base64 do LocalStorage de volta para Buffer/Blob
@@ -24,7 +24,6 @@ export async function POST(request: Request) {
     formData.append("file", refAudioBlob, `voice_${voiceId}.webm`); 
 
     // 3. Fazer POST para o endpoint público do ngrok rodando no Google Colab
-    const colabUrl = "https://benmost-norman-ultrasonically.ngrok-free.dev/clone";
     console.log(`Chamando OmniVoice em ${colabUrl}...`);
     
     const colabResponse = await fetch(colabUrl, {
