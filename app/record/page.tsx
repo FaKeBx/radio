@@ -27,6 +27,11 @@ export default function RecordPage() {
 
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Acesso ao microfone não suportado. Isso geralmente ocorre se você não estiver acessando o site via HTTPS ou localhost. Tente acessar usando HTTPS.");
+        return;
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       
@@ -37,7 +42,9 @@ export default function RecordPage() {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        // Usar o mimeType nativo do MediaRecorder para maior compatibilidade (ex: iOS)
+        const mimeType = mediaRecorderRef.current?.mimeType || "audio/webm";
+        const blob = new Blob(chunksRef.current, { type: mimeType });
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
@@ -48,9 +55,15 @@ export default function RecordPage() {
       setIsRecording(true);
       setAudioUrl(null);
       setAudioBlob(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Erro ao acessar microfone", err);
-      alert("Não foi possível acessar o microfone.");
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert("Permissão para usar o microfone foi negada pelo navegador.");
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        alert("Nenhum microfone encontrado no dispositivo.");
+      } else {
+        alert("Erro ao acessar o microfone. Verifique se o site está rodando em HTTPS ou se as permissões estão liberadas. Detalhe: " + err.message);
+      }
     }
   };
 
