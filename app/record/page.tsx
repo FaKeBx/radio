@@ -16,6 +16,7 @@ const blobToBase64 = (blob: Blob): Promise<string> => {
 
 export default function RecordPage() {
   const [isRecording, setIsRecording] = useState(false);
+  const [isMicGranted, setIsMicGranted] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -24,6 +25,31 @@ export default function RecordPage() {
   const [name, setName] = useState("");
   const [style, setStyle] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
+
+  const requestMicPermission = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert("Acesso ao microfone não suportado. Isso geralmente ocorre se você não estiver acessando o site via HTTPS ou localhost. Tente acessar usando HTTPS.");
+        return;
+      }
+      
+      // Pede a permissão (mostra o popup do navegador)
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Permissão concedida, podemos parar a stream temporária
+      stream.getTracks().forEach(track => track.stop());
+      setIsMicGranted(true);
+    } catch (err: any) {
+      console.error("Erro ao pedir permissão", err);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert("Permissão para usar o microfone foi negada pelo navegador.");
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        alert("Nenhum microfone encontrado no dispositivo.");
+      } else {
+        alert("Erro ao acessar o microfone. Verifique se o site está rodando em HTTPS ou se as permissões estão liberadas. Detalhe: " + err.message);
+      }
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -145,7 +171,12 @@ export default function RecordPage() {
           </div>
 
           <div className="flex gap-4">
-            {!isRecording ? (
+            {!isMicGranted ? (
+              <Button onClick={requestMicPermission} size="lg" className="bg-blue-600 hover:bg-blue-700 text-white rounded-full px-8">
+                <Mic className="w-4 h-4 mr-2" />
+                Permitir Acesso ao Microfone
+              </Button>
+            ) : !isRecording ? (
               <Button onClick={startRecording} size="lg" className="bg-red-500 hover:bg-red-600 text-white rounded-full px-8">
                 Gravar Voz
               </Button>
