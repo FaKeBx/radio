@@ -46,9 +46,18 @@ export default function RecordPage() {
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      try {
+        if (mediaRecorderRef.current.state !== "inactive") {
+          mediaRecorderRef.current.stop();
+        }
+      } catch (error) {
+        console.error("Erro ao parar a gravação", error);
+      } finally {
+        setIsRecording(false);
+        if (mediaRecorderRef.current.stream) {
+          mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+        }
+      }
     }
   };
 
@@ -103,7 +112,7 @@ export default function RecordPage() {
           
           <div className="relative flex items-center justify-center w-48 h-48 rounded-full bg-muted border-4 border-dashed border-primary/20">
             {isRecording ? (
-              <div className="absolute inset-0 rounded-full animate-ping bg-red-500/20" />
+              <div className="absolute inset-0 rounded-full animate-ping bg-red-500/20 pointer-events-none" />
             ) : null}
             <Mic className={`w-16 h-16 ${isRecording ? "text-red-500" : "text-muted-foreground"}`} />
           </div>
